@@ -134,12 +134,30 @@
 ;; rust stuff end
 
 ;; c/c++ stuff start
-(add-hook 'c-mode-hook #'lsp-deferred)
+
+(defun run-rad-debugger () ;;@WINDOWS-ONLY ;;@OS-SPECIFIC
+  (interactive)
+  (let*
+      ;; variables
+      (
+       (root (project-root (project-current t)))
+       (default-directory root)
+       (dbg (expand-file-name "dbg.bat" root))
+      )
+    (if (file-exists-p dbg)
+       (shell-command dbg)
+       (message "no dbg.bat found in %s" root)
+    )
+  )
+)
+
+(add-hook 'c-mode-hook (lambda () (lsp-deferred)))
 (add-hook 'c++-mode-hook #'lsp-deferred)
 ;; c/c++ stuff end
 
 
 ;; generic start
+(toggle-debug-on-error)
 (electric-pair-mode 1)
 ;; generic end
 
@@ -153,6 +171,7 @@
   "c C" #'compile
   "c c" #'recompile
   "c ;" #'comment-dwim
+  "c D" #'run-rad-debugger ;;@WINDOWS-ONLY ;;@OS-SPECIFIC
 )
 ;; code stuff end
 
@@ -188,7 +207,6 @@
 (straight-use-package 'lsp-pyright)
 (require 'lsp-pyright)
 (add-hook 'python-mode-hook #'lsp-deferred) 
-
 ;; python stuff end
 
 ;; go stuff start
@@ -225,3 +243,7 @@
 ;; - lsp errors myabe checked using flymake-...
 
 
+;; verilog stuff start
+(straight-use-package 'verilog-mode)
+(add-hook 'verilog-mode-hook (lambda () (message "verilog start") (lsp-deferred)))
+;; verilog stuff end
