@@ -53,16 +53,17 @@
   (let ((new-window (split-window-below)))
     (select-window new-window)))
 
+
 (defvar previous-window-configuration nil)
 
 (defun toggle-maximize-buffer ()
   (interactive)
-  (if (one-window-p)
+  (if (and (one-window-p)
+           previous-window-configuration)
       (set-window-configuration previous-window-configuration)
-      (setq previous-window-configuration (current-window-configuration))
-  )
-  (delete-other-window)
-)
+    (setq previous-window-configuration
+          (current-window-configuration))
+    (delete-other-windows)))
 
 (leader
   "w v" #'split-right-and-move
@@ -77,7 +78,7 @@
   "w L" #'windmove-swap-states-right
   "w J" #'windmove-swap-states-down
   "w K" #'windmove-swap-states-up
-  "w m" #'my/toggle-maximize-buffer
+  "w m" #'toggle-maximize-buffer
  )
 
 ;; window stuff end
@@ -111,12 +112,15 @@
 )
 ;; buffer stuff end
 
+;; searcing stuff start
+(straight-use-package 'rg)
+;; searcing stuff end
 
 ;; project stuff start
 (leader
   "p f" #'project-find-file
   "p p" #'project-switch-project
-  "p s" #'project-find-regexp
+  "p s" #'rg-project
   "p c" #'project-compile
   "p !" #'project-shell)
 ;; project stuff end
@@ -172,8 +176,9 @@
   "c c" #'recompile
   "c ;" #'comment-dwim
   "c D" #'run-rad-debugger ;;@WINDOWS-ONLY ;;@OS-SPECIFIC
+  "c f r" #'lsp-find-references
 )
-;; code stuff end
+;; Code stuff end
 
 
 ;; evaluate stuff start
@@ -215,6 +220,7 @@
   (setq indent-tabs-mode t)
   (setq lsp-go-use-gofumpt t)
 )
+(straight-use-package 'go-mode)
 (add-hook 'go-mode-hook (lambda ()
 			  (lsp-deferred)
 			  (my-go-style)
