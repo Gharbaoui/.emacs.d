@@ -231,6 +231,7 @@
 
 ;; erlang stuff start
 (straight-use-package 'erlang)
+(add-hook 'erlang-mode-hook (lambda () (setq indent-tabs-mode nil) (lsp-deferred)))
 ;; erlang stuff end
 
 
@@ -253,3 +254,21 @@
 (straight-use-package 'verilog-mode)
 (add-hook 'verilog-mode-hook (lambda () (message "verilog start") (lsp-deferred)))
 ;; verilog stuff end
+
+
+;; ternimal stuff start
+(straight-use-package 'vterm)
+
+(defun vterm-send-region (start end)
+  "Send selected region to vterm."
+  (interactive "r")
+  (let ((text (buffer-substring-no-properties start end)))
+    (with-current-buffer "*vterm*" (vterm-send-string text))
+  )
+)
+
+(leader
+  "t n" #'vterm
+  "t s" #'vterm-send-region
+)
+;; terminal stuff end
