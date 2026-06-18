@@ -128,6 +128,7 @@
 
 ;; lsp stuff start 
 (straight-use-package 'lsp-mode)
+(setq lsp-log-io t)
 (setq lsp-headerline-breadcrumb-enable nil)
 ;; lsp stuff end
 
@@ -163,6 +164,7 @@
 ;; generic start
 (toggle-debug-on-error)
 (electric-pair-mode 1)
+(electric-indent-mode 1)
 ;; generic end
 
 
@@ -210,8 +212,20 @@
 
 ;; python stuff start
 (straight-use-package 'lsp-pyright)
+(straight-use-package 'pyvenv)
 (require 'lsp-pyright)
-(add-hook 'python-mode-hook #'lsp-deferred) 
+(require 'pyvenv)
+(pyvenv-mode 1)
+
+;; (setq lsp-pyright-python-executable-cmd
+;;       "/home/mohamed/environments/manim/bin/python")
+
+(add-hook 'python-mode-hook (lambda ()
+			      (pyvenv-activate "/home/mohamed/environments/manim")
+			      (lsp-deferred)
+			      )) 
+
+
 ;; python stuff end
 
 ;; go stuff start
@@ -231,7 +245,8 @@
 
 ;; erlang stuff start
 (straight-use-package 'erlang)
-(add-hook 'erlang-mode-hook (lambda () (setq indent-tabs-mode nil) (lsp-deferred)))
+(setq lsp-enable-on-type-formatting nil)
+(add-hook 'erlang-mode-hook (lambda ()  (lsp-deferred)))
 ;; erlang stuff end
 
 
