@@ -250,6 +250,13 @@
 ;; erlang stuff end
 
 
+;; zig stuff start
+(straight-use-package 'zig-mode)
+(require 'zig-mode)
+(add-hook 'zig-mode-hook #'lsp-deferred)
+;; zig stuff end
+
+
 ;; workspace stuff start
 (tab-bar-mode 1)
 (leader
@@ -286,4 +293,5 @@
   "t n" #'vterm
   "t s" #'vterm-send-region
 )
-;; terminal stuff end
+;; @HACK
+(add-to-list 'exec-path "/home/mohamed/tools/zls/zig-out/bin")
