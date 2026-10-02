@@ -36,6 +36,8 @@
 
 (load-theme 'doom-dark+ t)
 
+(straight-use-package 'company-mode)
+
 ;; window stuff start
 (require 'general)
 (general-create-definer leader 
@@ -138,33 +140,84 @@
           (lambda () (setq indent-tabs-mode nil) (lsp-deferred)))
 ;; rust stuff end
 
-;; c/c++ stuff start
+;; ;; c/c++ stuff start
 
-(defun run-rad-debugger () ;;@WINDOWS-ONLY ;;@OS-SPECIFIC
+;; (defun run-rad-debugger () ;;@WINDOWS-ONLY ;;@OS-SPECIFIC
+;;   (interactive)
+;;   (let*
+;;       ;; variables
+;;       (
+;;        (root (project-root (project-current t)))
+;;        (default-directory root)
+;;        (dbg (expand-file-name "dbg.bat" root))
+;;       )
+;;     (if (file-exists-p dbg)
+;;        (shell-command dbg)
+;;        (message "no dbg.bat found in %s" root)
+;;     )
+;;   )
+;; )
+
+;; (add-hook 'c-mode-hook (lambda () (lsp-deferred)))
+;; (add-hook 'c++-mode-hook (lambda ()   (setq lsp-clients-clangd-executable "clangd")   (setq lsp-clients-clangd-args '("--query-driver=/**/bin/xtensa-esp32-elf-*" "--background-index" "--header-insertion=iwyu" "-j=4" )) (lsp-deferred)))
+
+
+
+
+
+
+
+
+;; ;; c/c++ stuff start
+
+(defun my-c-c++-setup ()
+  ;; Use normal Emacs/cc-mode indentation.
+  ;; Do NOT let lsp-mode/clangd format or indent code.
+  (setq-local lsp-enable-on-type-formatting nil)
+  (setq-local lsp-enable-indentation nil)
+
+  ;; Normal C/C++ indentation settings.
+  (setq-local c-basic-offset 4)
+  (setq-local indent-tabs-mode nil)
+
+  ;; Start clangd/LSP.
+  (setq-local lsp-clients-clangd-executable "clangd")
+  (setq-local lsp-clients-clangd-args
+              '("--query-driver=/**/bin/xtensa-esp32-elf-*"
+                "--background-index"
+                "--header-insertion=iwyu"
+                "-j=4"))
+  (lsp-deferred))
+
+(add-hook 'c-mode-hook #'my-c-c++-setup)
+(add-hook 'c++-mode-hook #'my-c-c++-setup)
+
+
+(defun run-rad-debugger ()
   (interactive)
-  (let*
-      ;; variables
-      (
-       (root (project-root (project-current t)))
-       (default-directory root)
-       (dbg (expand-file-name "dbg.bat" root))
-      )
+  (let* ((root (project-root (project-current t)))
+         (default-directory root)
+         (dbg (expand-file-name "dbg.bat" root)))
     (if (file-exists-p dbg)
-       (shell-command dbg)
-       (message "no dbg.bat found in %s" root)
-    )
-  )
-)
+        (shell-command dbg)
+      (message "no dbg.bat found in %s" dbg))))
 
-(add-hook 'c-mode-hook (lambda () (lsp-deferred)))
-(add-hook 'c++-mode-hook #'lsp-deferred)
+
 ;; c/c++ stuff end
+
+;; c/c++ stuff end
+
+
+
+
+
+
 
 
 ;; generic start
 (toggle-debug-on-error)
 (electric-pair-mode 1)
-(electric-indent-mode 1)
+;; (electric-indent-mode 1)
 ;; generic end
 
 
@@ -223,6 +276,7 @@
 (add-hook 'python-mode-hook (lambda ()
 			      (pyvenv-activate "/home/mohamed/environments/manim")
 			      (lsp-deferred)
+			      (flymake-mode -1)
 			      )) 
 
 
@@ -244,11 +298,26 @@
 
 
 ;; erlang stuff start
-(straight-use-package 'erlang)
-(setq lsp-enable-on-type-formatting nil)
-(add-hook 'erlang-mode-hook (lambda ()  (lsp-deferred)))
-;; erlang stuff end
+;; (straight-use-package 'erlang)
+;; ;; (setq lsp-enable-on-type-formatting nil)
 
+;; /home/mohamed/tools/otp_src_29.0.3/lib/tools/emacs
+(defun my-erlang-align-end ()
+  (when (and (derived-mode-p 'erlang-mode)
+	     (looking-back "\\_<end[.,;]" (line-beginning-position)))
+    (save-excursion
+      (let ((beg (progn (erlang-beginning-of-clause) (point)))
+            (end (line-end-position)))
+        (indent-region beg end)))))
+
+
+(add-hook 'post-self-insert-hook #'my-erlang-align-end)
+(add-to-list 'load-path "/home/mohamed/tools/otp_src_29.0.3/lib/tools/emacs")
+(setq erlang-root-dir "/home/mohamed/tools/otp_src_29.0.3")
+(add-to-list 'exec-path "/home/mohamed/tools/otp_src_29.0.3/bin")
+(require 'erlang-start)
+(add-hook 'erlang-mode-hook (lambda () (message "lsp for erlang should be started where is it looking i have no idea")  (lsp-deferred)))
+;; erlang stuff end
 
 ;; zig stuff start
 (straight-use-package 'zig-mode)
@@ -274,7 +343,44 @@
 
 ;; verilog stuff start
 (straight-use-package 'verilog-mode)
-(add-hook 'verilog-mode-hook (lambda () (message "verilog start") (lsp-deferred)))
+
+(defun my-verilog-setup ()
+  (setq-local verilog-indent-level 4)
+  (setq-local verilog-indent-level-module 4)
+  (setq-local verilog-indent-level-declaration 4)
+  (setq-local verilog-indent-level-behavioral 4)
+  (setq-local verilog-indent-level-directive 4)
+  (setq-local verilog-case-indent 4)
+  (setq-local verilog-auto-newline nil)
+  (setq-local verilog-auto-indent-on-newline t)
+  (setq-local verilog-tab-always-indent t)
+  (setq-local verilog-auto-lineup 'all)
+  (setq-local verilog-highlight-p1800-keywords t)
+  (setq-local verilog-highlight-modules t)
+  (setq-local verilog-highlight-grouping-keywords t)
+  (setq-local indent-tabs-mode nil)
+  (setq-local tab-width 24)
+  )
+
+
+
+(defun my-verilog-auto-close-begin ()
+  (when (and (derived-mode-p 'verilog-mode)
+             (eq last-command-event ?n)
+             (looking-back "\\_<begin\\_>" (line-beginning-position)))
+    (newline-and-indent)
+    (save-excursion
+      (newline)
+      (insert "end")
+      (indent-according-to-mode))))
+
+(add-hook 'post-self-insert-hook #'my-verilog-auto-close-begin)
+
+(add-hook 'verilog-mode-hook (lambda ()
+			       (my-verilog-setup)
+			       (lsp-deferred)
+			      ))
+
 ;; verilog stuff end
 
 
@@ -295,3 +401,8 @@
 )
 ;; @HACK
 (add-to-list 'exec-path "/home/mohamed/tools/zls/zig-out/bin")
+
+
+
+;;; experiments start
+;;; experiments end
